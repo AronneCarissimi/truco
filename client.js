@@ -28,19 +28,10 @@ client.on("close", () => {
 
 // Function to read user input and send it to the server
 const sendInputToServer = () => {
-    rl.question(
-        "Enter a string to send to the server (or 'exit' to quit): ",
-        (input) => {
-            if (input.toLowerCase() === "exit") {
-                rl.close();
-                client.end(); // Close the connection to the server
-                console.log("Connection closed");
-            } else {
-                client.write(input);
-                sendInputToServer(); // Call the function recursively to keep asking for input
-            }
-        }
-    );
+    rl.question("", (input) => {
+        client.write(input);
+        sendInputToServer(); // Call the function recursively to keep asking for input
+    });
 };
 
 // Start asking for user input
