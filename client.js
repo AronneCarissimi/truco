@@ -4,7 +4,7 @@ const readline = require("readline");
 // Create a readline interface to read user input from the console
 const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout,
+    output: process.stdout
 });
 
 // Create a TCP socket client
@@ -14,9 +14,10 @@ const client = new net.Socket();
 client.connect(3000, "localhost", () => {
     console.log("Connected to server");
 });
-// Handle data received from the server
+// parse the data received from the server from json to an array of objects
 client.on("data", (data) => {
-    console.log("Received from server:", data.toString());
+    const cards = JSON.parse(data);
+    console.log("Received cards:", cards);
 });
 
 //make the program exit when the server closes
