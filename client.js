@@ -1,5 +1,6 @@
 const net = require("net");
 const readline = require("readline");
+const cantos = require("./cantos.js");
 
 // Create a readline interface to read user input from the console
 const rl = readline.createInterface({
@@ -14,10 +15,44 @@ const client = new net.Socket();
 client.connect(3000, "localhost", () => {
     console.log("Connected to server");
 });
+
+// keep track of the game state
+let gameState = "not started";
+let cards = [];
+let turn = 0;
+
 // parse the data received from the server from json to an array of objects
 client.on("data", (data) => {
-    const cards = JSON.parse(data);
-    console.log("Received cards:", cards);
+    if (gameState === "not started") {
+        gameState = "started";
+        cards = JSON.parse(data);
+        console.log("Received cards:", cards);
+        turn = 1;
+        tuoTurno();
+        return;
+    }
+    if (gameState === "waiting") {
+        if (data.toString() === "truco") {
+            cantos.truco();
+        } else if (data.toString() === "envido") {
+            cantos.envido();
+        } else {
+            console.log("Received from server:", data.toString());
+            console.log(cards);
+            if (turn <= 3) {
+                tuoTurno();
+            } else {
+                gameState = "mano terminata";
+                client.write("mano terminata");
+            }
+        }
+    }
+    if (gameState === "mano terminata") {
+        console.log("mano terminata");
+        gameState = "not started";
+        turn = 0;
+        cards = JSON.parse(data);
+    }
 });
 
 //make the program exit when the server closes
@@ -27,12 +62,29 @@ client.on("close", () => {
 });
 
 // Function to read user input and send it to the server
-const sendInputToServer = () => {
-    rl.question("", (input) => {
+const tuoTurno = () => {
+    rl.question("select card to send to the server (0-2)", (input) => {
+        if (input != 0 && input != 1 && input != 2) {
+            if (input === "exit") {
+                client.end();
+                console.log("Exiting program");
+                process.exit(0);
+                return;
+            }
+            console.log("Invalid input, please try again");
+            tuoTurno();
+            return;
+        }
+        if (cards[input] === undefined) {
+            console.log("Invalid input, please try again");
+            tuoTurno();
+            return;
+        }
         client.write(input);
-        sendInputToServer(); // Call the function recursively to keep asking for input
+        console.log("Sent card to server:", cards[input]);
+        turn++;
+        cards[input] = undefined;
+        gameState = "waiting";
     });
+    console.log("turno: " + turn);
 };
-
-// Start asking for user input
-sendInputToServer();
