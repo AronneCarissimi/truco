@@ -5,7 +5,7 @@ const cantos = require("./cantos.js");
 // Create a readline interface to read user input from the console
 const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
 });
 
 // Create a TCP socket client
@@ -38,12 +38,12 @@ client.on("data", (data) => {
             cantos.envido();
         } else {
             console.log("Received from server:", data.toString());
+
             console.log(cards);
             if (turn <= 3) {
                 tuoTurno();
             } else {
                 gameState = "mano terminata";
-                client.write("mano terminata");
             }
         }
     }
@@ -51,7 +51,7 @@ client.on("data", (data) => {
         console.log("mano terminata");
         gameState = "not started";
         turn = 0;
-        cards = JSON.parse(data);
+        console.log("Received from server:", data.toString());
     }
 });
 

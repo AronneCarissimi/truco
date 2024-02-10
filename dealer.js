@@ -8,6 +8,8 @@ function generateDeck() {
             deck.push({ suit, value });
         }
     }
+    //add the value of the cards
+
     return deck;
 }
 
@@ -23,5 +25,5 @@ function dealCards(deck) {
 
 module.exports = {
     generateDeck,
-    dealCards
+    dealCards,
 };

@@ -19,6 +19,8 @@ const server = net.createServer((socket) => {
     let clientHandScore = 0;
     let serverHandScore = 0;
 
+    let trucoMultiplier = 1;
+
     const { clientCards, serverCards } = initGame();
     console.log("Client cards:", clientCards);
     console.log("Server cards:", serverCards);
@@ -32,29 +34,49 @@ const server = net.createServer((socket) => {
 
     // Event listener for receiving data from the client
     socket.on("data", (data) => {
+        console.log("Received from client:", data.toString().trim());
+        console.log("gamestate:", gameState);
+
         const message = data.toString().trim();
         console.log(`Received from client ${clientId}:`, message);
         if (gameState === "waiting") {
             const cardIndex = parseInt(message);
             if (true) {
-                const card = clientCards[cardIndex];
-                console.log(`Client ${clientId} selected card:`, card);
-                // select a card to send to the client
-                const serverCardIndex = Math.floor(
-                    Math.random() * serverCards.length
-                );
-                const serverCard = serverCards[serverCardIndex];
-                console.log(`Server selected card:`, serverCard);
-                // send the selected card to the client
-                socket.write(JSON.stringify(serverCard));
-                // remove the selected card from the server's hand
-                serverCards.splice(serverCardIndex, 1);
-                // change the game state
-                gameState = "waiting";
+                if (serverCards.length > 0) {
+                    const card = clientCards[cardIndex];
+                    console.log(`Client ${clientId} selected card:`, card);
+                    // select a card to send to the client
+                    const serverCardIndex = Math.floor(
+                        Math.random() * serverCards.length
+                    );
+                    const serverCard = serverCards[serverCardIndex];
+                    console.log(`Server selected card:`, serverCard);
+                    // send the selected card to the client
+                    socket.write(JSON.stringify(serverCard));
+                    // remove the selected card from the server's hand
+                    serverCards.splice(serverCardIndex, 1);
+                    // compare the cards
+                    if (card.value > serverCard.value) {
+                        clientHandScore += 1;
+                    } else if (card.value < serverCard.value) {
+                        serverHandScore += 1;
+                    } else if (card.value === serverCard.value) {
+                        clientHandScore += 1;
+                        serverHandScore += 1;
+                        if (clientHandScore === 2 || serverHandScore === 2) {
+                            clientHandScore -= 1;
+                            serverHandScore -= 1;
+                        }
+                    }
+
+                    // change the game state
+                    gameState = "waiting";
+                }
                 // check if the game is over
                 if (clientHandScore == 2 || serverHandScore == 2) {
                     console.log("mano terminata");
-                    socket.write("mano terminata");
+                    gameState = "mano terminata";
+
                     // calculate the hand score
                     if (clientHandScore > serverHandScore) {
                         clientScore += 1 * trucoMultiplier;
@@ -78,6 +100,7 @@ const server = net.createServer((socket) => {
                     console.log("Server cards:", serverCards);
                     // send the client the initial cards
                     socket.write(JSON.stringify(clientCards));
+                    gameState = "waiting";
                 }
             }
             return;
